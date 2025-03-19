@@ -20,12 +20,12 @@ namespace lab2.Platforms
         {
             if (isStreaming)
             {
-                ChildEventStateChanged("Is already streaming");
+                NotifyObservers("Is already streaming");
             }
             else
             {
                 isStreaming = true;
-                ChildEventStateChanged("Streaming is started");
+                NotifyObservers("Streaming is started");
             }
         }
         public void StopStreaming()
@@ -33,11 +33,11 @@ namespace lab2.Platforms
             if (isStreaming)
             {
                 isStreaming = false;
-                ChildEventStateChanged("Streaming is stopped");
+                NotifyObservers("Streaming is stopped");
             }
             else
             {
-                ChildEventStateChanged("Streaming is already stopped");
+                NotifyObservers("Streaming is already stopped");
             }
         }
 
