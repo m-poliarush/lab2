@@ -16,25 +16,22 @@ namespace lab2
         Platform ActivePlatform;
 
         List<IGame> games;
-        private IDisposable _unsubscriber;
+        private IDisposable unsubscriber;
 
         public void Subscribe(IObservable<string> provider)
         {
             if (provider != null)
             {
-                _unsubscriber = provider.Subscribe(this);
+                unsubscriber = provider.Subscribe(this);
             }
         }
 
         public void OnCompleted()
         {
-            Console.WriteLine("Notification complete.");
-            Unsubscribe();
         }
 
         public void OnError(Exception error)
         {
-            Console.WriteLine($"Error: {error.Message}");
         }
 
         public void OnNext(string value)
@@ -44,7 +41,7 @@ namespace lab2
 
         public void Unsubscribe()
         {
-            _unsubscriber.Dispose();
+            unsubscriber.Dispose();
         }
         public Client()
         {
@@ -271,9 +268,10 @@ namespace lab2
                 }
                 else
                 {
-                    if (ActivePlatform.UninstallGame(ActivePlatform.InstalledGames.ElementAt(index)))
+                    var temp = ActivePlatform.InstalledGames.ElementAt(index) as Game;
+                    if (ActivePlatform.UninstallGame(ActivePlatform.InstalledGames.ElementAt(index)) && temp != null)
                     {
-                        this._unsubscriber.Dispose();
+                        temp.Unsubscribe(this);
                     }
                 }
             }

@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace lab2.Games.Interface
 {
-    public interface IGame : IGameEventNotifier
+    public interface IGame
     {
         string Name { get; }
         int RequiredPerformance { get; }

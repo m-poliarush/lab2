@@ -7,10 +7,9 @@ using lab2.Games.Interface;
 
 namespace lab2.Games
 {
-    public class Game : IGame, IGameEventNotifier, IObservable<string>
+    public class Game : IGame, IObservable<string>
     {
         private List<IObserver<string>> _observers = new List<IObserver<string>>();
-        public event Action<string> GameStateChanged;
         public string Name { get; private set; }
         public int RequiredPerformance { get; private set; }
         public int RequiredDiskSpace { get; private set; }
@@ -121,11 +120,6 @@ namespace lab2.Games
             }
         }
 
-        /*protected void ChildClassEvent(string message)
-        {
-            NotifyObservers(message);
-        }
-       */
         public IDisposable Subscribe(IObserver<string> observer)
         {
             if (!_observers.Contains(observer))
@@ -133,6 +127,13 @@ namespace lab2.Games
                 _observers.Add(observer);
             }
             return new Unsubscriber(_observers, observer);
+        }
+        public void Unsubscribe(IObserver<string> observer)
+        {
+            if (_observers.Contains(observer))
+            {
+                _observers.Remove(observer);
+            }
         }
 
         protected void NotifyObservers(string message)
