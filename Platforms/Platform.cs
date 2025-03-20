@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using lab2.Games;
 using lab2.Games.Interface;
+using lab2.Platforms.Models;
 
 namespace lab2.Platforms
 {

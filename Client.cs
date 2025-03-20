@@ -7,6 +7,7 @@ using System.Transactions;
 using lab2.Games;
 using lab2.Games.Interface;
 using lab2.Platforms;
+using lab2.Platforms.Models;
 using lab2.Platforms.PlatformFactory;
 
 namespace lab2
