@@ -7,9 +7,9 @@ using lab2.Games.Interface;
 
 namespace lab2.Games
 {
-    public class Game : IGame, IGameEventNotifier
+    public class Game : IGame, IObservable<string>
     {
-        public event Action<string> GameStateChanged;
+        private List<IObserver<string>> _observers = new List<IObserver<string>>();
         public string Name { get; private set; }
         public int RequiredPerformance { get; private set; }
         public int RequiredDiskSpace { get; private set; }
@@ -43,37 +43,37 @@ namespace lab2.Games
         {
             if (!this.isInstalled)
             {
-                GameStateChanged.Invoke("First you need to install the game");
+                NotifyObservers("First you need to install the game");
                 return;
             }
             this.isLogged = true;
-            GameStateChanged.Invoke("Successfully logged in");
+            NotifyObservers("Successfully logged in");
         }
         public void Save(string saveName)
         {
             if (!this.isInstalled)
             {
-                GameStateChanged.Invoke("First you need to install the game");
+                NotifyObservers("First you need to install the game");
                 return;
             }
             savings.Add(saveName);
-            GameStateChanged.Invoke($"Save {saveName} is created");
+            NotifyObservers($"Save {saveName} is created");
         }
         public void LoadFromSave(int index)
         {
             if (!this.isInstalled)
             {
-                GameStateChanged.Invoke("First you need to install the game");
+                    NotifyObservers("First you need to install the game");
                 return;
             }
             if(savings.Count!= 0 && index > -1&& index < savings.Count)
             {
-                GameStateChanged.Invoke($"Loaded save {savings.ElementAt(index)}");
+                NotifyObservers($"Loaded save {savings.ElementAt(index)}");
                 return;
             }
             else
             {
-                GameStateChanged.Invoke("Index out of range");
+                NotifyObservers("Index out of range");
             }
 
 
@@ -82,22 +82,22 @@ namespace lab2.Games
         {
             if (!this.isInstalled)
             {
-                GameStateChanged.Invoke("First you need to install the game");
+                NotifyObservers("First you need to install the game");
                 return;
             }
             if (isLaunched)
             {
-                GameStateChanged.Invoke($"The game {Name} is already launched");
+                NotifyObservers($"The game {Name} is already launched");
             }
             else
             {
                 isLaunched = true;
-                GameStateChanged.Invoke($"The game {Name} is launched");
+                NotifyObservers($"The game {Name} is launched");
                 if (savings.Any())
                 {
-                    GameStateChanged.Invoke($"Loaded from {savings.Last()} save");
+                    NotifyObservers($"Loaded from {savings.Last()} save");
                 }
-                else GameStateChanged.Invoke("No previous saves found");
+                else NotifyObservers("No previous saves found");
 
             }
         }
@@ -105,24 +105,43 @@ namespace lab2.Games
         {
             if (!this.isInstalled)
             {
-                GameStateChanged.Invoke("First you need to install the game");
+                NotifyObservers("First you need to install the game");
                 return;
             }
             if (isLaunched)
             {
                 isLaunched = false;
                 isLogged = false;
-                GameStateChanged.Invoke($"The game {Name} is closed");
+                NotifyObservers($"The game {Name} is closed");
             }
             else
             {
-                GameStateChanged.Invoke($"The game {Name} isn`t launched");
+                NotifyObservers($"The game {Name} isn`t launched");
             }
         }
 
-        protected void ChildClassEvent(string message)
+        public IDisposable Subscribe(IObserver<string> observer)
         {
-            GameStateChanged.Invoke(message);
+            if (!_observers.Contains(observer))
+            {
+                _observers.Add(observer);
+            }
+            return new Unsubscriber(_observers, observer);
+        }
+        public void Unsubscribe(IObserver<string> observer)
+        {
+            if (_observers.Contains(observer))
+            {
+                _observers.Remove(observer);
+            }
+        }
+
+        protected void NotifyObservers(string message)
+        {
+            foreach (var observer in _observers)
+            {
+                observer.OnNext(message);
+            }
         }
     }
 }

@@ -8,12 +8,13 @@ using System.Text;
 using System.Threading.Tasks;
 using lab2.Games;
 using lab2.Games.Interface;
+using lab2.Platforms.Models;
 
 namespace lab2.Platforms
 {
-    public abstract class Platform
+    public abstract class Platform : IObservable<string>
     {
-        public event Action<string> PlatformStateChanged;
+        private List<IObserver<string>> _observers = new List<IObserver<string>>();
         public List<IGame> InstalledGames { get; private set; }
         public int Performance { get; protected set; }
         protected int DiskSpace;
@@ -27,26 +28,26 @@ namespace lab2.Platforms
         {
             if (this.FreeDiskSpace < game.RequiredDiskSpace)
             {
-                PlatformStateChanged.Invoke($"Not enough disk space. Needed {game.RequiredDiskSpace}");
+                NotifyObservers($"Not enough disk space. Needed {game.RequiredDiskSpace}");
                 return false;
             }
             if (game is IStrategyGame && !(this is PC))
             {
-                PlatformStateChanged.Invoke("The strategy game can only be installed on PC ");
+                NotifyObservers("The strategy game can only be installed on PC ");
                 return false;
             }
             else
             {
                 if (InstalledGames.Contains(game))
                 {
-                    PlatformStateChanged.Invoke($"The game {game.Name} is already installed");
+                    NotifyObservers($"The game {game.Name} is already installed");
                     return false;
                 }
                 InstalledGames.Add(game);
                 game.Install();
                 FreeDiskSpace -= game.RequiredDiskSpace;
-                PlatformStateChanged.Invoke($"The game {game.Name} is successfully installed");
-                PlatformStateChanged.Invoke($"Disk space left: {FreeDiskSpace}");
+                NotifyObservers($"The game {game.Name} is successfully installed");
+                NotifyObservers($"Disk space left: {FreeDiskSpace}");
                 return true;
             }
 
@@ -57,8 +58,8 @@ namespace lab2.Platforms
                 InstalledGames.Remove(game);
                 FreeDiskSpace += game.RequiredDiskSpace;
                 game.Uninstall();
-                PlatformStateChanged.Invoke($"The game {game.Name} is successfully uninstalled");
-                PlatformStateChanged.Invoke($"Disk space left: {FreeDiskSpace}");
+                NotifyObservers($"The game {game.Name} is successfully uninstalled");
+                NotifyObservers($"Disk space left: {FreeDiskSpace}");
                 return true;
             }
             return false;
@@ -88,12 +89,23 @@ namespace lab2.Platforms
             return false;
 
         }
-        public void ChildEventStateChanged(string message)
+        public IDisposable Subscribe(IObserver<string> observer)
         {
-            PlatformStateChanged.Invoke(message);
+            if (!_observers.Contains(observer))
+            {
+                _observers.Add(observer);
+            }
+            return new Unsubscriber(_observers, observer);
         }
-        
 
+        
+        protected void NotifyObservers(string message)
+        {
+            foreach (var observer in _observers)
+            {
+                observer.OnNext(message);
+            }
+        }
 
     }
 }

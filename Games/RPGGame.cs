@@ -16,11 +16,11 @@ namespace lab2.Games
             if (num > 1)
             {
                 isMultiplayerEnabled = true;
-                ChildClassEvent("Multiplayer is enabled");
+                NotifyObservers("Multiplayer is enabled");
             }
             else {
                 isMultiplayerEnabled = false;
-                ChildClassEvent("2 or more manipulators are needed");
+                NotifyObservers("2 or more manipulators are needed");
             }
         }
 

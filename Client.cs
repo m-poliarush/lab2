@@ -7,14 +7,43 @@ using System.Transactions;
 using lab2.Games;
 using lab2.Games.Interface;
 using lab2.Platforms;
+using lab2.Platforms.Models;
+using lab2.Platforms.PlatformFactory;
 
 namespace lab2
 {
-    public class Client
+    public class Client : IObserver<string>
     {
         Platform ActivePlatform;
 
         List<IGame> games;
+        private IDisposable unsubscriber;
+
+        public void Subscribe(IObservable<string> provider)
+        {
+            if (provider != null)
+            {
+                unsubscriber = provider.Subscribe(this);
+            }
+        }
+
+        public void OnCompleted()
+        {
+        }
+
+        public void OnError(Exception error)
+        {
+        }
+
+        public void OnNext(string value)
+        {
+            Console.WriteLine(value);
+        }
+
+        public void Unsubscribe()
+        {
+            unsubscriber.Dispose();
+        }
         public Client()
         {
             games = new List<IGame>();
@@ -25,10 +54,6 @@ namespace lab2
             games.Add(new StrategyGame("Hearts Of Iron", 600, 30));
             games.Add(new AdventureGame("Uncharted", 700, 28));
             games.Add(new AdventureGame("Tomb Raider", 650, 26));
-        }
-        public void DisplayMessage(string message)
-        {
-            Console.WriteLine(message);
         }
         public void LoadSave(IGame game)
         {
@@ -79,6 +104,7 @@ namespace lab2
         }
         public void SelectPlatform()
         {
+            
             while (true) {
                 Console.Clear();
                 Console.WriteLine("Select the platform (PC, Mobile, Console)");
@@ -86,21 +112,23 @@ namespace lab2
                 switch (platform)
                 {
                     case "pc":
-                        ActivePlatform = new PC();
-                        
+                        SelectPlatform(new PCCreator());
                         break;
                     case "mobile":
-                        ActivePlatform = new Mobile();
+                        SelectPlatform(new MobileCreator());
                         break;
                     case "console":
-                        ActivePlatform = new GamingConsole();
+                        SelectPlatform(new GamingConsoleCreator());
                         break;
                         
                 }
-                if (ActivePlatform == null) continue;
-                ActivePlatform.PlatformStateChanged += DisplayMessage;
-                break;
+                if (ActivePlatform != null) break;
             }
+        }
+        private void SelectPlatform(BaseCreator creator)
+        {
+            ActivePlatform = creator.CreatePlatform();
+            this.Subscribe(ActivePlatform);
         }
         public void LaunchedGameMenu(IGame game)
         {
@@ -209,7 +237,7 @@ namespace lab2
             {
                 if (ActivePlatform.InstallGame(games.ElementAt(index)))
                 {
-                    games.ElementAt(index).GameStateChanged += DisplayMessage; 
+                    this.Subscribe(games.ElementAt(index) as Game);
                 }
             }
 
@@ -241,9 +269,10 @@ namespace lab2
                 }
                 else
                 {
-                    if (ActivePlatform.UninstallGame(ActivePlatform.InstalledGames.ElementAt(index)))
+                    var temp = ActivePlatform.InstalledGames.ElementAt(index) as Game;
+                    if (ActivePlatform.UninstallGame(ActivePlatform.InstalledGames.ElementAt(index)) && temp != null)
                     {
-                        games.ElementAt(index).GameStateChanged -= DisplayMessage;
+                        temp.Unsubscribe(this);
                     }
                 }
             }
